@@ -41,6 +41,7 @@ void initClk()
         sleep(1);
         shmid = shmget(SHKEY, 4, 0444);
     }
+    
     shmaddr = (int *)shmat(shmid, (void *)0, 0);
 }
 
@@ -60,9 +61,15 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+
 struct Process {
   int id;
   int arrival;
   int runtime;
   int priority;
+};
+
+struct msgbuff {
+    int mtype;
+    struct Process mprocess;
 };

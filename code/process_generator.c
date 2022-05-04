@@ -32,12 +32,11 @@ int main(int argc, char **argv)
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     int schAlgo=atoi(argv[3]);
 
-
     // 3. Initiate and create the scheduler and clock processes.
-    
+    system("./clk.out &");
 
     // 4. Use this function after creating the clock process to initialize clock.
-    ////initClk();
+    initClk();
     // To get time use this function. 
     //int x = getClk();
     //printf("Current Time is %d\n", x);
@@ -58,8 +57,32 @@ int main(int argc, char **argv)
     // printf("%d \n",parr[0].priority);
 
     // 6. Send the information to the scheduler at the appropriate time.
+    key_t key_id;
+    int  msgq_id, process_order, send_val;
+    process_order = 0;
+
+    key_id = ftok("key", 65); //create unique key
+    msgq_id = msgget(key_id, 0666 | IPC_CREAT); //create message queue and return id
+
+
+    while(process_order != nProcess + 1){
+        
+        if(parr[process_order].arrival == getClk())
+        {
+            struct msgbuff msg;
+            msg.mprocess.id = parr[process_order].id;
+            msg.mprocess.arrival = parr[process_order].arrival;
+            msg.mprocess.runtime = parr[process_order].runtime;
+            msg.mprocess.priority = parr[process_order].priority;
+
+            send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
+            process_order++;
+        }
+        
+    }
+
     // 7. Clear clock resources
-    //destroyClk(true);
+    destroyClk(true);
 }
 
 void clearResources(int signum)
