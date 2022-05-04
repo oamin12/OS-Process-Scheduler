@@ -18,7 +18,7 @@ void cleanup(int signum)
 }
 
 /* This file represents the system clock for ease of calculations */
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     printf("Clock Starting...\n");
     signal(SIGINT, cleanup);

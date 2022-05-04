@@ -11,10 +11,16 @@ int main(int argc, char **argv)
 		exit(1);
 	}
     int q;
-    if (argc==6) {
-        q=atoi(argv[5]);	 
+    if ((argc==6) && (atoi(argv[3])==3 || atoi(argv[3])==4)) {
+        q=atoi(argv[5]);
 	}
-    //printf("%d \n",q);
+    else if((argc<6) && (atoi(argv[3])==3 || atoi(argv[3])==4))
+    {
+        printf("The scheduling algorithm needs a quantum. Exiting!\n");
+		exit(1);
+    }
+
+    
     FILE* file = fopen(argv[1], "r");
     int arr[1000];
     int num;
@@ -30,11 +36,39 @@ int main(int argc, char **argv)
     
 
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
-    int schAlgo=atoi(argv[3]);
-
+    char * schAlgo=argv[3];
     // 3. Initiate and create the scheduler and clock processes.
-    system("./clk.out &");
-
+    pid_t  pid;
+    pid = fork();
+ 
+   if (pid == -1){
+ 
+      // pid == -1 means error occurred
+      printf("error in forking occured\n");
+      exit(EXIT_FAILURE);
+   }
+   else if (pid == 0){
+ 
+      char * argv_list[] = {"./clk.out",NULL};
+ 
+      execv("./clk.out",argv_list);
+      exit(0);
+   }
+    pid = fork();
+    if (pid == -1){
+ 
+      // pid == -1 means error occurred
+      printf("error in forking occured\n");
+      exit(EXIT_FAILURE);
+   }
+   else if (pid == 0){
+      char * argv_list[] = {"./scheduler.out",schAlgo,NULL};
+      execv("./scheduler.out",argv_list);
+      exit(0);
+   }
+    
+    //system("./clk.out &");
+    printf("hello there\n");
     // 4. Use this function after creating the clock process to initialize clock.
     initClk();
     // To get time use this function. 
@@ -63,19 +97,24 @@ int main(int argc, char **argv)
 
     key_id = ftok("key", 65); //create unique key
     msgq_id = msgget(key_id, 0666 | IPC_CREAT); //create message queue and return id
+    printf("Message Queue ID in pg = %d\n", msgq_id);
 
 
-    while(process_order != nProcess + 1){
-        
+    while(process_order != nProcess){
+        //printf("the time is: %d \n",getClk());
         if(parr[process_order].arrival == getClk())
         {
             struct msgbuff msg;
+            msg.mtype = 7;
             msg.mprocess.id = parr[process_order].id;
             msg.mprocess.arrival = parr[process_order].arrival;
             msg.mprocess.runtime = parr[process_order].runtime;
             msg.mprocess.priority = parr[process_order].priority;
 
             send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
+            printf("process is: %d\n",parr[process_order].id);
+            printf("time is: %d \n",getClk());
+            //printf("arrived at: %d",msg.mprocess.arrival);
             process_order++;
         }
         
