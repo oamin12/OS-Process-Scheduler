@@ -83,6 +83,7 @@ int main(int argc, char **argv)
         parr[i].arrival=arr[i*4+1];
         parr[i].runtime=arr[i*4+2];
         parr[i].priority=arr[i*4+3];
+        parr[i].remainingtime=arr[i*4+2];
     }
 
     // printf("%d \n",parr[0].id);
@@ -110,6 +111,7 @@ int main(int argc, char **argv)
             msg.mprocess.arrival = parr[process_order].arrival;
             msg.mprocess.runtime = parr[process_order].runtime;
             msg.mprocess.priority = parr[process_order].priority;
+            msg.mprocess.remainingtime= parr[process_order].remainingtime;
 
             send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
             printf("process is: %d\n",parr[process_order].id);

@@ -30,13 +30,24 @@ int main(int argc, char *argv[])
             else
                 printf("\nMessage received: %d\n", message.mprocess.id);
                 //push to Queue/(DS be sefa 3ama) according to algo
-        }
-    if (atoi(argv[1])==1)
-    {
+                if (atoi(argv[1])==1)
+                {
         
-    }    
+                }
+                else if (atoi(argv[1])==2)
+                {
+
+                }
+                else if (atoi(argv[1])==3)
+                {
+
+                }
+                else
+                {
+
+                }
+        } 
     //TODO: implement the scheduler.
     //TODO: upon termination release the clock resources.
-
     //destroyClk(true);
 }
