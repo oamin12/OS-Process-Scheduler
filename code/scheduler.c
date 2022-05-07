@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
     initClk();
-
+    Queue q = initQueue();
     printf("the algo is: %d \n",atoi(argv[1]));
     key_t key_id;
         int rec_val, msgq_id;
@@ -24,15 +24,32 @@ int main(int argc, char *argv[])
             //printf("Entered MSG REC");
             /* receive all types of messages */
             rec_val = msgrcv(msgq_id, &message, sizeof(message.mprocess), 0, !IPC_NOWAIT);
-
+            int priority=message.mprocess.priority;
+            int priorityid=message.mprocess.id;
+            int prioritySJF=message.mprocess.runtime;
+            // printf("d%d \n",message.mprocess.id);
+            // printf("d%d \n",message.mprocess.arrival);
+            // printf("d%d \n",message.mprocess.runtime);
+            // printf("d%d \n",message.mprocess.priority);
             if (rec_val == -1)
-                perror("Error in receive");
+                {perror("Error in receive");
+                }
             else
                 printf("\nMessage received: %d\n", message.mprocess.id);
                 //push to Queue/(DS be sefa 3ama) according to algo
                 if (atoi(argv[1])==1)
                 {
-        
+                    printf("SJF \n");
+                    //pEnqueue(q,message.mprocess.id, priority);
+                    if(message.mprocess.id==5)
+                    {
+                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+                    
+                    }
                 }
                 else if (atoi(argv[1])==2)
                 {

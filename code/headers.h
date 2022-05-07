@@ -75,3 +75,8 @@ struct msgbuff {
     int mtype;
     struct Process mprocess;
 };
+
+struct pcb {
+    struct Process PCBprocess;
+    int pid;
+};
