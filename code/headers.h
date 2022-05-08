@@ -23,6 +23,7 @@ typedef short bool;
 int *shmaddr; //
 //===============================
 
+
 int getClk()
 {
     return *shmaddr;
@@ -61,6 +62,11 @@ void destroyClk(bool terminateAll)
     {
         killpg(getpgrp(), SIGINT);
     }
+}
+
+void destroyMsgQueue(int msgid)
+{
+    msgctl(msgid, IPC_RMID, (struct msqids_ds *)0);
 }
 
 struct Process {

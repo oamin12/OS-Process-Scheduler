@@ -123,6 +123,7 @@ int main(int argc, char **argv)
     }
 
     // 7. Clear clock resources
+    //destroyMsgQueue(msgq_id);
     destroyClk(true);
 }
 
