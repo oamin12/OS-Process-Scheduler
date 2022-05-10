@@ -1,7 +1,7 @@
 #include "headers.h"
 
 /* Modify this file as needed*/
-int remainingtime, id;
+int remainingtime, id, old_clk;
 
 int main(int agrc, char *argv[])
 {
@@ -9,14 +9,22 @@ int main(int agrc, char *argv[])
     initClk();
     id = atoi(argv[1]);
     remainingtime = atoi(argv[2]);
-    printf("id = %d, rem = %d\n", id, remainingtime);
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
+
+    old_clk = 0;
+    printf("start at = %d \n", getClk());
     while (remainingtime > 0)
     {
-        // remainingtime = ??;
+        if(getClk() - old_clk >= 1)
+        {
+            remainingtime--;
+            old_clk = getClk();
+        }
+        
     }
 
+    printf("finished at = %d and old_clk = %d \n", getClk(), old_clk);
     destroyClk(false);
 
     return 0;
