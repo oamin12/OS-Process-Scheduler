@@ -1,15 +1,23 @@
 #include "headers.h"
 
 void check_arrival (int );
+void child_exit_handler(int );
 
-
-int rec_val, msgq_id;
+int rec_val, msgq_id, num_processes, current_process_id, choosed_algo;
 struct pcb pcb_table[100]; // first Process at index 1
+struct Queue *priority_q;
+struct Node *Node_to_beinserted;
 
 int main(int argc, char *argv[])
 {
     initClk();
-    //Queue q = initQueue();
+    signal(SIGCHLD, child_exit_handler);
+
+    priority_q = createQueue();
+    num_processes = atoi(argv[2]);
+
+    choosed_algo = atoi(argv[1]);
+
     printf("the algo is: %d \n",atoi(argv[1]));
     key_t key_id;
         
@@ -20,6 +28,7 @@ int main(int argc, char *argv[])
         if (msgq_id == -1)
         {
             perror("Error in create");
+            
             exit(-1);
         }
         printf("Message Queue ID = %d\n", msgq_id);
@@ -37,17 +46,12 @@ int main(int argc, char *argv[])
                 if (atoi(argv[1])==1)
                 {
                     check_arrival(1);
-                    printf("SJF \n");
-                    //pEnqueue(q,message.mprocess.id, priority);
-                    //if(message.mprocess.id==5)
-                    //{
-                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
-                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
-                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
-                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
-                    //printf("HIGHEST PRIORITY PROCESS: %d \n",dequeue(q));
+
+                    if(is_empty(priority_q) && num_processes == 0)
+                    {
+                        break;
+                    }
                     
-                   // }
                 }
                 else if (atoi(argv[1])==2)
                 {
@@ -64,7 +68,7 @@ int main(int argc, char *argv[])
         } 
     //TODO: implement the scheduler.
     //TODO: upon termination release the clock resources.
-    //destroyClk(true);
+    destroyClk(true);
 }
 
 void check_arrival (int algo_num)
@@ -72,43 +76,83 @@ void check_arrival (int algo_num)
     struct msgbuff message;
     int m_pid;
 
-    rec_val = msgrcv(msgq_id, &message, sizeof(message.mprocess), 0, !IPC_NOWAIT);
-    if (rec_val == -1)
-    {
-        perror("Error in receive");
-    }
-    else
-    {
-        m_pid = fork();
-        if (m_pid == -1){
- 
-            // pid == -1 means error occurred
-            printf("error in forking occured\n");
-            exit(EXIT_FAILURE);
+    int flag_waiting = 0;
+
+    do{
+        rec_val = msgrcv(msgq_id, &message, sizeof(message.mprocess), 0, IPC_NOWAIT);
+        
+        if (rec_val == -1 && is_empty(priority_q))
+        {
+            rec_val = msgrcv(msgq_id, &message, sizeof(message.mprocess), 0, !IPC_NOWAIT);
+            flag_waiting = 1;
         }
-        else if (m_pid == 0){
-            //creating process
-            char temp_id[10];
-            char temp_runtime[10];
-            
-            //converts id and runtime to strings instead of integers
-            sprintf(temp_id, "%d", message.mprocess.id);
-            sprintf(temp_runtime, "%d", message.mprocess.runtime);
+        
+        if(rec_val != -1)
+        {
+            num_processes--;
+            m_pid = fork();
+            if (m_pid == -1){
+    
+                // pid == -1 means error occurred
+                printf("error in forking occured\n");
+                exit(EXIT_FAILURE);
+            }
+            else if (m_pid == 0){
+                //creating process
+                char temp_id[10];
+                char temp_runtime[10];
+                
+                //converts id and runtime to strings instead of integers
+                sprintf(temp_id, "%d", message.mprocess.id);
+                sprintf(temp_runtime, "%d", message.mprocess.runtime);
 
-            char * argv_list[] = {"./process.out", temp_id, temp_runtime, NULL};
+                char * argv_list[] = {"./process.out", temp_id, temp_runtime, NULL};
 
-            execv("./process.out",argv_list);
-            exit(0);
+                execv("./process.out",argv_list);
+                exit(0);
+            }
+
+            //Adding the arrived process to the pcb table
+            int x = message.mprocess.id;
+            pcb_table[x].pid = m_pid;
+            pcb_table[x].PCBprocess.id = message.mprocess.id;
+            pcb_table[x].PCBprocess.runtime = message.mprocess.runtime;
+            pcb_table[x].PCBprocess.arrival = message.mprocess.arrival;
+            pcb_table[x].PCBprocess.priority = message.mprocess.priority;
+            pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
+
+            printf("flag == %d", flag_waiting);
+            if(flag_waiting == 1) // if the first process or late process
+            {
+                kill(pcb_table[message.mprocess.id].pid, SIGCONT);
+                current_process_id = message.mprocess.id;
+            }
+
+            //depending on the scheduling algo. we fill the right data structure
+            if(algo_num == 1)
+            {
+                Node_to_beinserted = newNode(message.mprocess.id, message.mprocess.runtime);
+                enQueue(priority_q, Node_to_beinserted); // enqueue this process
+            }
+
+            flag_waiting = 0;
+
         }
 
-        //Adding the arrived process to the pcb table
-        int x = message.mprocess.id;
-        pcb_table[x].pid = m_pid;
-        pcb_table[x].PCBprocess.id = message.mprocess.id;
-        pcb_table[x].PCBprocess.runtime = message.mprocess.runtime;
-        pcb_table[x].PCBprocess.arrival = message.mprocess.arrival;
-        pcb_table[x].PCBprocess.priority = message.mprocess.priority;
-        pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
+     }while(rec_val != -1);
+}
 
+void child_exit_handler(int signum)
+{
+    if(choosed_algo == 1)
+    {
+        deQueue(priority_q);
+        if(!is_empty(priority_q))
+        {
+            struct Node *next_process;
+            next_process = peek_queue(priority_q);
+            current_process_id = next_process->process_id;
+            kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
+        }
     }
 }

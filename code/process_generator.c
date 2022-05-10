@@ -62,9 +62,11 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
    }
    else if (pid == 0){
-      char * argv_list[] = {"./scheduler.out",schAlgo,NULL};
-      execv("./scheduler.out",argv_list);
-      exit(0);
+        char temp_nProcess[10];
+        sprintf(temp_nProcess, "%d", nProcess);
+        char * argv_list[] = {"./scheduler.out",schAlgo, temp_nProcess,NULL};
+        execv("./scheduler.out",argv_list);
+        exit(0);
    }
     
     //system("./clk.out &");
@@ -114,17 +116,26 @@ int main(int argc, char **argv)
             msg.mprocess.remainingtime= parr[process_order].remainingtime;
 
             send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
-            printf("process is: %d\n",parr[process_order].id);
+            //printf("process is: %d\n",parr[process_order].id);
             printf("time is: %d \n",getClk());
             //printf("arrived at: %d",msg.mprocess.arrival);
             process_order++;
         }
         
     }
-
+    
+    int status;
+    pid = wait(&status);
     // 7. Clear clock resources
     //destroyMsgQueue(msgq_id);
-    destroyClk(true);
+    
+    if (WIFEXITED(status))
+    {
+        destroyClk(true);
+        exit(0);
+    }     
+
+    exit(0);
 }
 
 void clearResources(int signum)

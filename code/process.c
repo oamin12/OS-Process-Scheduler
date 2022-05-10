@@ -5,14 +5,21 @@ int remainingtime, id, old_clk;
 
 int main(int agrc, char *argv[])
 {
-    
     initClk();
     id = atoi(argv[1]);
     remainingtime = atoi(argv[2]);
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
 
-    old_clk = 0;
+    old_clk = getClk();
+
+    printf("process id = %d", id);
+    if(id != 1)
+    {
+        raise(SIGTSTP); //stoping the process when being created
+    }
+        
+
     printf("start at = %d \n", getClk());
     while (remainingtime > 0)
     {

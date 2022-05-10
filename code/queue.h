@@ -19,9 +19,7 @@ struct Node
     struct Node *next;
     int priority;
     int process_id;
-    int process_time;
-    int arrival_time;
-    enum STATUS stat;
+
 
     //for the output file
     int finish_time;
@@ -40,15 +38,12 @@ struct Queue
 };
 
 // A utility function to create a new linked list node.
-struct Node *newNode(int p_id, int arr, int p_time, int p_priority, int status)
+struct Node *newNode(int p_id, int p_priority)
 {
     struct Node *temp = (struct Node *)malloc(sizeof(struct Node));
     temp->next = NULL;
     temp->process_id = p_id;
     temp->priority = p_priority;
-    temp->stat = status;
-    temp->arrival_time = arr;
-    temp->process_time = p_time;
     return temp;
 }
 
