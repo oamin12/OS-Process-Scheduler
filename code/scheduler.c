@@ -3,13 +3,13 @@
 void check_arrival (int );
 void child_exit_handler(int );
 
-int rec_val, msgq_id, num_processes, current_process_id, choosed_algo, old_clk;
+int rec_val, msgq_id, num_processes, current_process_id, choosed_algo, old_clk, quantum;
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
 struct Node *Node_to_beinserted;
-int q;
 
 struct Node *running_process; //for Round Robin
+
 
 int main(int argc, char *argv[])
 {
@@ -22,12 +22,13 @@ int main(int argc, char *argv[])
     choosed_algo = atoi(argv[1]);
     if(choosed_algo==3 ||choosed_algo==3)
     {
-        q=atoi(argv[3]);
+        quantum=atoi(argv[3]);
     }
     current_process_id = -1;
 
-    printf("the algo is: %d \n",atoi(argv[1]));
-    key_t key_id;
+    printf("the algo is: %d\n",atoi(argv[1]));
+   
+        key_t key_id;
         
 
         key_id = ftok("key", 65);               //create unique key
@@ -39,7 +40,6 @@ int main(int argc, char *argv[])
             
             exit(-1);
         }
-        printf("Message Queue ID = %d\n", msgq_id);
 
         
         while(1)
@@ -74,35 +74,43 @@ int main(int argc, char *argv[])
             }
             else if (atoi(argv[1])==3) // (RR)
             {
-                int quantum;
-                check_arrival(1);
+                check_arrival(3);
                 // if no process is running
                 //then run the first the process that comes
                 if(current_process_id == -1 && !is_empty(priority_q)) 
                 {
+                    
                     running_process = peek_queue(priority_q);
                     current_process_id = running_process->process_id;
-                    printf("current_process_id = %d", current_process_id);
+                    printf("current_process_id = %d\n", current_process_id);
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
-                    deQueue(priority_q);
                     old_clk = getClk();
+                    deQueue(priority_q);
+                    
+                    printqueue(priority_q);
                 }
 
                 //if the currentlly running process has reached the end of its quatumn
                 //push it back in the queue(at the end) and run the next one
                 //N.B any new process will be automatically at the end of the queue
-                if(getClk() - old_clk == quantum)
+                if(getClk() - old_clk >= quantum  && !is_empty(priority_q) && current_process_id != -1)
                 {
-                    kill(pcb_table[running_process.id].pid, 20);
-                    enQueue(running_process, Node_to_beinserted); //enqueuing running process again
+                    kill(pcb_table[current_process_id].pid, 20);
+                    Node_to_beinserted = newNode(current_process_id, 1);
+                    enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
+
+                    old_clk = getClk();
+                    int temp = getClk();
+                    while(getClk() - temp == 0);
 
 
                     running_process = peek_queue(priority_q);
                     current_process_id = running_process->process_id;
-                    printf("current_process_id = %d", current_process_id);
+                    printf("current_process_id = %d\n", current_process_id);
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
+                    
                     deQueue(priority_q);
-                    old_clk = getClk();
+                    
                 }
 
                 if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
@@ -139,7 +147,6 @@ void check_arrival (int algo_num)
         
         if(rec_val != -1)
         {
-            printf("flag == %d\n", flag_waiting);
             num_processes--;
             m_pid = fork();
             if (m_pid == -1){
@@ -162,7 +169,6 @@ void check_arrival (int algo_num)
                 execv("./process.out",argv_list);
                 exit(0);
             }
-            printf("stoping process id = %d and pid = %d\n", message.mprocess.id, m_pid);
             kill(m_pid, 20);
             //Adding the arrived process to the pcb table
             int x = message.mprocess.id;
@@ -209,6 +215,8 @@ void child_exit_handler(int signum)
     }
     else if(choosed_algo == 3)
     {
+        // int temp = getClk();
+        // while(getClk() - temp == 0);
         current_process_id = -1;
     }
 }
