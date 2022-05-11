@@ -13,25 +13,27 @@ int main(int agrc, char *argv[])
 
     old_clk = getClk();
 
-    printf("process id = %d", id);
-    if(id != 1)
-    {
-        raise(SIGTSTP); //stoping the process when being created
-    }
+    printf("process id = %d ", id);
+    // if(id != 1)
+    // {
+    //     raise(SIGTSTP); //stoping the process when being created
+    // }
         
 
-    printf("start at = %d \n", getClk());
+    printf("my id = %d and start at = %d\n",id, getClk());
     while (remainingtime > 0)
     {
         if(getClk() - old_clk >= 1)
         {
+            //printf("hi my id = %d and my rem time = %d\n",id,remainingtime);
             remainingtime--;
             old_clk = getClk();
         }
         
     }
 
-    printf("finished at = %d and old_clk = %d \n", getClk(), old_clk);
+    printf("my id = %d and finished at = %d\n",id, getClk());
+    kill(getppid(),SIGUSR1);
     destroyClk(false);
 
     return 0;
