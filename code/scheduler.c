@@ -80,7 +80,28 @@ int main(int argc, char *argv[])
             }
             else if (atoi(argv[1])==2)
             {
+                check_arrival(2);
 
+                if(current_process_id == -1 && !is_empty(priority_q))
+                {
+                    struct Node *next_process;
+                    next_process = peek_queue(priority_q);
+                    current_process_id = next_process->process_id;
+                    //printf("current_process_id = %d", current_process_id);
+                    int wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
+                    total_wait=total_wait+wait;
+                    total_runtime=total_runtime+pcb_table[current_process_id].PCBprocess.runtime;
+                    pcb_table[current_process_id].PCBprocess.wait=wait;
+                    fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,wait);
+                    kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
+                    deQueue(priority_q);
+                }
+
+
+                if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
+                {
+                    break;
+                }
 
 
             }
@@ -111,7 +132,6 @@ int main(int argc, char *argv[])
                     Node_to_beinserted = newNode(current_process_id, 1);
                     enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
 
-                    old_clk = getClk();
                     // int temp = getClk();
                     // while(getClk() - temp == 0);
 
@@ -120,7 +140,7 @@ int main(int argc, char *argv[])
                     current_process_id = running_process->process_id;
                     printf("current_process_id = %d\n", current_process_id);
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
-
+                    old_clk = getClk();
                     deQueue(priority_q);
 
                 }
@@ -216,6 +236,25 @@ void check_arrival (int algo_num)
             }
             else if(algo_num == 2)
             {
+                if((current_process_id != -1) && ((message.mprocess.priority)<pcb_table[current_process_id].PCBprocess.priority))
+                {
+                    fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.wait);
+                    kill(pcb_table[current_process_id].pid, 20);
+                    //deQueue(priority_q);
+                    Node_to_beinserted = newNode(current_process_id,pcb_table[current_process_id].PCBprocess.priority );
+                    enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
+                    current_process_id=-1;
+
+                }
+                Node_to_beinserted = newNode(message.mprocess.id, message.mprocess.priority);
+                enQueue(priority_q, Node_to_beinserted); // enqueue this process
+                printqueue(priority_q);
+                // if((current_process_id!=-1) && ((message.mprocess.priority)>pcb_table[current_process_id].PCBprocess.priority))
+                // {
+                //    Node_to_beinserted = newNode(current_process_id,pcb_table[current_process_id].PCBprocess.priority );
+                //    enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
+
+                // }
 
             }
             else if(algo_num == 3)
@@ -243,7 +282,11 @@ void child_exit_handler(int signum)
     }
     else if(choosed_algo == 2)
     {
-
+        int TA=getClk()-pcb_table[current_process_id].PCBprocess.arrival;
+        float WTA = (float)TA / (float)pcb_table[current_process_id].PCBprocess.runtime;
+        total_WTA = total_WTA + WTA;
+        fprintf(file, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d  WTA %.2f\n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.wait,TA,WTA);
+        current_process_id = -1;
     }
     else if(choosed_algo == 3)
     {

@@ -1,25 +1,20 @@
 #include "headers.h"
 
+
+void continue_handler(int);
 /* Modify this file as needed*/
 int remainingtime, id, old_clk;
 
 int main(int agrc, char *argv[])
 {
+    
     initClk();
     id = atoi(argv[1]);
     remainingtime = atoi(argv[2]);
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
-
-    if(atoi(argv[3])==1)
-    {
-        old_clk = getClk();
-    }
-    else
-    {
-        old_clk = 0;
-
-    }
+    signal (SIGCONT, continue_handler);
+    old_clk = getClk();
 
     printf("process id = %d and running time = %d \n", id, remainingtime);
         
@@ -33,7 +28,7 @@ int main(int agrc, char *argv[])
             remainingtime--;
             old_clk = getClk();
         }
-        
+     
     }
 
     printf("my id = %d and finished at = %d\n",id, getClk());
@@ -41,4 +36,10 @@ int main(int agrc, char *argv[])
     destroyClk(false);
 
     return 0;
+}
+
+void continue_handler(int signum)
+{
+    old_clk = getClk();
+    signal (SIGCONT, continue_handler);
 }

@@ -17,12 +17,13 @@ typedef short bool;
 #define false 0
 
 #define SHKEY 300
+#define SHKEY2 400
 
 ///==============================
 //don't mess with this variable//
 int *shmaddr; //
 //===============================
-
+int *shmaddr2;
 
 int getClk()
 {
@@ -45,6 +46,27 @@ void initClk()
     }
     
     shmaddr = (int *)shmat(shmid, (void *)0, 0);
+}
+void initRemTime()
+{
+    int shmid = shmget(SHKEY2, 4, 0444);
+    while ((int)shmid == -1)
+    {
+        //Make sure that the clock exists
+        printf("Wait! The clock not initialized yet!\n");
+        sleep(1);
+        shmid = shmget(SHKEY2, 4, 0444);
+    }
+    
+    shmaddr2 = (int *)shmat(shmid, (void *)0, 0);
+}
+void setRemTime(int val)
+{
+    shmaddr2=&val;
+}
+int getRemTime()
+{
+    return *shmaddr2;
 }
 
 /*

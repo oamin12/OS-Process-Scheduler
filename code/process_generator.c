@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
             send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
             //printf("process is: %d\n",parr[process_order].id);
-            printf("time is: %d \n",getClk());
+            printf("process %d, is sent at time : %d \n",msg.mprocess.id,getClk());
             //printf("arrived at: %d",msg.mprocess.arrival);
             process_order++;
         }
