@@ -75,6 +75,9 @@ struct Process {
   int runtime;
   int priority;
   int remainingtime;
+  int wait;
+  int TA;
+  int WTA;
 };
 
 struct msgbuff {

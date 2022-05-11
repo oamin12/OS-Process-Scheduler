@@ -4,13 +4,22 @@ void check_arrival (int );
 void child_exit_handler(int );
 
 int rec_val, msgq_id, num_processes, current_process_id, choosed_algo;
+int total_wait=0;
+float total_WTA=0;
+int total_runtime=0;
+
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
 struct Node *Node_to_beinserted;
 int q;
+FILE* file;
+
 
 int main(int argc, char *argv[])
 {
+    file = fopen("scheduler.log", "w");
+    fprintf(file, "#At time x process y state arr w total z remian y wait k \n");
+
     initClk();
     signal (SIGUSR1, child_exit_handler);
 
@@ -52,7 +61,12 @@ int main(int argc, char *argv[])
                     struct Node *next_process;
                     next_process = peek_queue(priority_q);
                     current_process_id = next_process->process_id;
-                    printf("current_process_id = %d", current_process_id);
+                    //printf("current_process_id = %d", current_process_id);
+                    int wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
+                    total_wait=total_wait+wait;
+                    total_runtime=total_runtime+pcb_table[current_process_id].PCBprocess.runtime;
+                    pcb_table[current_process_id].PCBprocess.wait=wait;
+                    fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,wait);
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
                     deQueue(priority_q);
                 }
@@ -79,6 +93,18 @@ int main(int argc, char *argv[])
         } 
     //TODO: implement the scheduler.
     //TODO: upon termination release the clock resources.
+    fclose(file);
+    FILE *fperf;
+    fperf = fopen("scheduler.perf", "w");
+
+    float utilization=((float)total_runtime/(float)getClk())*100;
+    float avg_WTA=((float)total_WTA)/((float)atoi(argv[2]));
+    float avg_wait=total_wait/(float)atoi(argv[2]);
+    fprintf(fperf, "CPU utilization = %.2f %% \n", utilization);
+    fprintf(fperf, "Avg WTA = %.2f\n", avg_WTA);
+    fprintf(fperf, "Avg Waiting = %.2f\n", avg_wait);
+    fclose(fperf);
+
     destroyClk(true);
 }
 
@@ -100,7 +126,7 @@ void check_arrival (int algo_num)
         
         if(rec_val != -1)
         {
-            printf("flag == %d\n", flag_waiting);
+            //printf("flag == %d\n", flag_waiting);
             num_processes--;
             m_pid = fork();
             if (m_pid == -1){
@@ -123,7 +149,7 @@ void check_arrival (int algo_num)
                 execv("./process.out",argv_list);
                 exit(0);
             }
-            printf("stoping process id = %d and pid = %d\n", message.mprocess.id, m_pid);
+            //printf("stoping process id = %d and pid = %d\n", message.mprocess.id, m_pid);
             kill(m_pid, 20);
             //Adding the arrived process to the pcb table
             int x = message.mprocess.id;
@@ -153,6 +179,10 @@ void child_exit_handler(int signum)
 {
     if(choosed_algo == 1)
     {
+        int TA=getClk()-pcb_table[current_process_id].PCBprocess.arrival;
+        float WTA = (float)TA / (float)pcb_table[current_process_id].PCBprocess.runtime;
+        total_WTA = total_WTA + WTA;
+        fprintf(file, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d  WTA %.2f\n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.wait,TA,WTA);
         current_process_id = -1;
     }
 }
