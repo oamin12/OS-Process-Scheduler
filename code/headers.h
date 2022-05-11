@@ -49,24 +49,24 @@ void initClk()
 }
 void initRemTime()
 {
-    int shmid = shmget(SHKEY2, 4, 0444);
+    int shmid = shmget(SHKEY2, 4, 0666);
     while ((int)shmid == -1)
     {
         //Make sure that the clock exists
-        printf("Wait! The clock not initialized yet!\n");
+        //printf("Wait! The remtime not initialized yet!\n");
         sleep(1);
-        shmid = shmget(SHKEY2, 4, 0444);
+        shmid = shmget(SHKEY2, 4, 0666);
     }
     
     shmaddr2 = (int *)shmat(shmid, (void *)0, 0);
 }
 void setRemTime(int val)
 {
-    shmaddr2=&val;
+    (*shmaddr2)=val;
 }
 int getRemTime()
 {
-    return *shmaddr2;
+    return (*shmaddr2);
 }
 
 /*
@@ -85,6 +85,11 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+void destroyRemTime()
+{
+    shmdt(shmaddr);
+    
+}
 
 void destroyMsgQueue(int msgid)
 {
@@ -97,6 +102,7 @@ struct Process {
   int runtime;
   int priority;
   int remainingtime;
+  int starttime;
   int wait;
   int TA;
   int WTA;
@@ -109,5 +115,6 @@ struct msgbuff {
 
 struct pcb {
     struct Process PCBprocess;
+    int remTime;
     int pid;
 };

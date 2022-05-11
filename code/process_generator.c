@@ -1,6 +1,7 @@
 #include "headers.h"
 
 void clearResources(int);
+int shmid1;
 
 int main(int argc, char **argv)
 {
@@ -33,8 +34,24 @@ int main(int argc, char **argv)
     int arrsize=i;
     int nProcess=arrsize/4;
     fclose(file);
-    
+    //////////////////////////
+    initRemTime();
 
+
+    shmid1 = shmget(SHKEY2, 4, IPC_CREAT | 0666);
+    if ((long)shmid1 == -1)
+    {
+        perror("Error in creating shm!");
+        exit(-1);
+    }
+    int *shmaddr2 = (int *)shmat(shmid1, (void *)0, 0);
+    if ((long)shmaddr2[0] == -1)
+    {
+        perror("Error in attaching the shm in clock!");
+        exit(-1);
+    }
+    *shmaddr2 = 0; /* Initialize shared memory */
+    ////////////////////////
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     char * schAlgo=argv[3];
     // 3. Initiate and create the scheduler and clock processes.

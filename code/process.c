@@ -9,11 +9,13 @@ int main(int agrc, char *argv[])
 {
     
     initClk();
+    initRemTime();
     id = atoi(argv[1]);
     remainingtime = atoi(argv[2]);
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
     signal (SIGCONT, continue_handler);
+
     old_clk = getClk();
 
     printf("process id = %d and running time = %d \n", id, remainingtime);
@@ -22,13 +24,12 @@ int main(int agrc, char *argv[])
     printf("my id = %d and start at = %d\n",id, getClk());
     while (remainingtime > 0)
     {
+        //setRemTime(remainingtime,id);
         if(getClk() - old_clk >= 1)
         {
-            printf("hi my id = %d and my rem time = %d\n",id,remainingtime);
             remainingtime--;
             old_clk = getClk();
         }
-     
     }
 
     printf("my id = %d and finished at = %d\n",id, getClk());
