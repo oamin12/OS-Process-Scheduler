@@ -7,6 +7,7 @@ int rec_val, msgq_id, num_processes, current_process_id, choosed_algo;
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
 struct Node *Node_to_beinserted;
+int q;
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,10 @@ int main(int argc, char *argv[])
     num_processes = atoi(argv[2]);
 
     choosed_algo = atoi(argv[1]);
+    if(choosed_algo==3 ||choosed_algo==3)
+    {
+        q=atoi(argv[3]);
+    }
     current_process_id = -1;
 
     printf("the algo is: %d \n",atoi(argv[1]));

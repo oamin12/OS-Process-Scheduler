@@ -64,8 +64,19 @@ int main(int argc, char **argv)
    else if (pid == 0){
         char temp_nProcess[10];
         sprintf(temp_nProcess, "%d", nProcess);
-        char * argv_list[] = {"./scheduler.out",schAlgo, temp_nProcess,NULL};
-        execv("./scheduler.out",argv_list);
+        
+        if((argc==6) && (atoi(argv[3])==3 || atoi(argv[3])==4))
+        {
+            char * argv_list[] = {"./scheduler.out",schAlgo, temp_nProcess,argv[5],NULL};  
+            execv("./scheduler.out",argv_list);
+  
+        }
+        else
+        {   
+            char * argv_list[] = {"./scheduler.out",schAlgo, temp_nProcess,NULL};
+            execv("./scheduler.out",argv_list);
+        }
+        
         exit(0);
    }
     
