@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
                     enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
 
                     old_clk = getClk();
-                    int temp = getClk();
-                    while(getClk() - temp == 0);
+                    // int temp = getClk();
+                    // while(getClk() - temp == 0);
 
 
                     running_process = peek_queue(priority_q);
@@ -184,12 +184,14 @@ void check_arrival (int algo_num)
                 //creating process
                 char temp_id[10];
                 char temp_runtime[10];
+                char temp_algo[10];
 
                 //converts id and runtime to strings instead of integers
                 sprintf(temp_id, "%d", message.mprocess.id);
                 sprintf(temp_runtime, "%d", message.mprocess.runtime);
+                sprintf(temp_algo, "%d", choosed_algo);
 
-                char * argv_list[] = {"./process.out", temp_id, temp_runtime, NULL};
+                char * argv_list[] = {"./process.out", temp_id, temp_runtime, temp_algo, NULL};
 
                 execv("./process.out",argv_list);
                 exit(0);

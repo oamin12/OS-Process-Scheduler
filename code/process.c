@@ -11,7 +11,15 @@ int main(int agrc, char *argv[])
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
 
-    old_clk = getClk();
+    if(atoi(argv[3])==1)
+    {
+        old_clk = getClk();
+    }
+    else
+    {
+        old_clk = 0;
+
+    }
 
     printf("process id = %d and running time = %d \n", id, remainingtime);
         
