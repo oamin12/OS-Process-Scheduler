@@ -3,10 +3,12 @@
 void check_arrival (int );
 void child_exit_handler(int );
 
-int rec_val, msgq_id, num_processes, current_process_id, choosed_algo;
+int rec_val, msgq_id, num_processes, current_process_id, choosed_algo, old_clk;
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
 struct Node *Node_to_beinserted;
+
+struct Node *running_process; //for Round Robin
 
 int main(int argc, char *argv[])
 {
@@ -38,7 +40,7 @@ int main(int argc, char *argv[])
         while(1)
         {
 
-            if (atoi(argv[1])==1)
+            if (atoi(argv[1])==1) // (SJF)
             {
                 check_arrival(1);
 
@@ -61,10 +63,47 @@ int main(int argc, char *argv[])
             }
             else if (atoi(argv[1])==2)
             {
+                
+
 
             }
-            else if (atoi(argv[1])==3)
+            else if (atoi(argv[1])==3) // (RR)
             {
+                int quantum;
+                check_arrival(1);
+                // if no process is running
+                //then run the first the process that comes
+                if(current_process_id == -1 && !is_empty(priority_q)) 
+                {
+                    running_process = peek_queue(priority_q);
+                    current_process_id = running_process->process_id;
+                    printf("current_process_id = %d", current_process_id);
+                    kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
+                    deQueue(priority_q);
+                    old_clk = getClk();
+                }
+
+                //if the currentlly running process has reached the end of its quatumn
+                //push it back in the queue(at the end) and run the next one
+                //N.B any new process will be automatically at the end of the queue
+                if(getClk() - old_clk == quantum)
+                {
+                    kill(pcb_table[running_process.id].pid, 20);
+                    enQueue(running_process, Node_to_beinserted); //enqueuing running process again
+
+
+                    running_process = peek_queue(priority_q);
+                    current_process_id = running_process->process_id;
+                    printf("current_process_id = %d", current_process_id);
+                    kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
+                    deQueue(priority_q);
+                    old_clk = getClk();
+                }
+
+                if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
+                {
+                    break;
+                }
 
             }
             else
@@ -136,6 +175,15 @@ void check_arrival (int algo_num)
                 Node_to_beinserted = newNode(message.mprocess.id, message.mprocess.runtime);
                 enQueue(priority_q, Node_to_beinserted); // enqueue this process
             }
+            else if(algo_num == 2)
+            {
+
+            }
+            else if(algo_num == 3)
+            {
+                Node_to_beinserted = newNode(message.mprocess.id, 1);
+                enQueue(priority_q, Node_to_beinserted); // enqueue this process
+            }
 
         }
         //printf("flag waiting = %d", flag_waiting);
@@ -147,6 +195,14 @@ void check_arrival (int algo_num)
 void child_exit_handler(int signum)
 {
     if(choosed_algo == 1)
+    {
+        current_process_id = -1;
+    }
+    else if(choosed_algo == 2)
+    {
+
+    }
+    else if(choosed_algo == 3)
     {
         current_process_id = -1;
     }
