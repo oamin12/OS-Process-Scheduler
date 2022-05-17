@@ -2,7 +2,7 @@
 
 void clearResources(int);
 int shmid1;
-
+int msgq_id;
 int main(int argc, char **argv)
 {
     signal(SIGINT, clearResources);
@@ -32,26 +32,8 @@ int main(int argc, char **argv)
         i++;
     }
     int arrsize=i;
-    int nProcess=arrsize/4;
+    int nProcess=arrsize/5;
     fclose(file);
-    //////////////////////////
-    initRemTime();
-
-
-    shmid1 = shmget(SHKEY2, 4, IPC_CREAT | 0666);
-    if ((long)shmid1 == -1)
-    {
-        perror("Error in creating shm!");
-        exit(-1);
-    }
-    int *shmaddr2 = (int *)shmat(shmid1, (void *)0, 0);
-    if ((long)shmaddr2[0] == -1)
-    {
-        perror("Error in attaching the shm in clock!");
-        exit(-1);
-    }
-    *shmaddr2 = 0; /* Initialize shared memory */
-    ////////////////////////
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     char * schAlgo=argv[3];
     // 3. Initiate and create the scheduler and clock processes.
@@ -109,21 +91,23 @@ int main(int argc, char **argv)
     struct Process parr[nProcess];
     for(int i=0;i<nProcess;i++)
     {
-        parr[i].id=arr[i*4];
-        parr[i].arrival=arr[i*4+1];
-        parr[i].runtime=arr[i*4+2];
-        parr[i].priority=arr[i*4+3];
-        parr[i].remainingtime=arr[i*4+2];
+        parr[i].id=arr[i*5];
+        parr[i].arrival=arr[i*5+1];
+        parr[i].runtime=arr[i*5+2];
+        parr[i].priority=arr[i*5+3];
+        parr[i].remainingtime=arr[i*5+2];
+        parr[i].memsize=arr[i*5+4];
     }
 
-    // printf("%d \n",parr[0].id);
-    // printf("%d \n",parr[0].arrival);
-    // printf("%d \n",parr[0].runtime);
-    // printf("%d \n",parr[0].priority);
+    printf("%d \n",parr[0].id);
+    printf("%d \n",parr[0].arrival);
+    printf("%d \n",parr[0].runtime);
+    printf("%d \n",parr[0].priority);
+    printf("%d \n",parr[0].memsize);
 
     // 6. Send the information to the scheduler at the appropriate time.
     key_t key_id;
-    int  msgq_id, process_order, send_val;
+    int process_order, send_val;
     process_order = 0;
 
     key_id = ftok("key", 65); //create unique key
@@ -160,6 +144,7 @@ int main(int argc, char **argv)
     if (WIFEXITED(status))
     {
         destroyClk(true);
+        destroyMsgQueue(msgq_id);
         exit(0);
     }     
 
@@ -168,5 +153,8 @@ int main(int argc, char **argv)
 
 void clearResources(int signum)
 {
-    //TODO Clears all resources in case of interruption
+    destroyClk(true);
+    destroyMsgQueue(msgq_id);
+    exit(0);
+
 }

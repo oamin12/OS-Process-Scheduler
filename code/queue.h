@@ -20,7 +20,6 @@ struct Node
     int priority;
     int process_id;
 
-
     //for the output file
     int finish_time;
     int waiting_time;
