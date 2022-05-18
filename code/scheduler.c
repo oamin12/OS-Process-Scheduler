@@ -14,7 +14,7 @@ int total_wait=0;
 float total_WTA=0;
 int total_runtime=0;
 //memory allocation
-struct Queue *free_memory[7];
+struct Queue *free_memory[8];
 int memory_allocated[1000];
 
 struct pcb pcb_table[100]; // first Process at index 1
@@ -448,7 +448,7 @@ void check_arrival (int algo_num)
             pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
             pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
             pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
-            printf("el memory be mayteen om : %d \n",message.mprocess.memsize);
+            printf("Process id = %d wants to allocate memory = %d \n", message.mprocess.id, message.mprocess.memsize);
             //depending on the scheduling algo. we fill the right data structure
             if(algo_num == 1)
             {
@@ -506,16 +506,18 @@ void child_exit_handler(int signum)
 //---------------------------------------------------MEMORY-------------------------------------------------------
 void CreateMemoryQueue()
 {
-    for(int i = 0; i < 7; ++i)
+    for(int i = 0; i < 8; ++i)
     {
         free_memory[i] = createQueue();
+        
     }
     struct pair pair_temp;
     pair_temp.first = 0;
     pair_temp.second = 1023;
 
     struct Node *temp = newNode_memory(0,pair_temp);
-    enQueue(free_memory[6], temp);
+    enQueue(free_memory[7], temp);
+    
 }
 
 void AllocateProcessToMemory(int size, int id)
@@ -524,24 +526,26 @@ void AllocateProcessToMemory(int size, int id)
     
     if(!is_empty(free_memory[process_size]))
     {
+        
         struct Node *temp = peek_queue(free_memory[process_size]);
         deQueue(free_memory[process_size]);
 
-        printf("Memory from %d to %d\n", temp->memory_index.first, temp->memory_index.second);
-
+        printf("Process id = %d Memory from %d to %d\n", id, temp->memory_index.first, temp->memory_index.second);
+        
         memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
     }
     else
     {
+        
         int i;
-        for(i = process_size+1; i < 7; ++i)
+        for(i = process_size+1; i < 8; ++i)
         {
             if(!is_empty(free_memory[i]))
                 break;
             
         }
 
-        if(i == 7)
+        if(i == 8)
         {
             printf("Sorry, failed to allocate memory \n");
         }
@@ -557,9 +561,9 @@ void AllocateProcessToMemory(int size, int id)
                 struct pair pair2;
 
                 pair1.first = temp->memory_index.first;
-                pair1.second = (temp->memory_index.second - temp->memory_index.first)/2;
+                pair1.second = temp->memory_index.first + (temp->memory_index.second - temp->memory_index.first)/2;
 
-                pair2.first = (temp->memory_index.second - temp->memory_index.first + 1)/2;
+                pair2.first = temp->memory_index.first + (temp->memory_index.second - temp->memory_index.first + 1)/2;
                 pair2.second = temp->memory_index.second;
 
                 struct Node *temp1 = newNode_memory(pair1.first,pair1);
@@ -570,7 +574,7 @@ void AllocateProcessToMemory(int size, int id)
                 deQueue(free_memory[i]);
             }
 
-            printf("Memory from %d to %d\n", temp->memory_index.first, temp->memory_index.second);
+            printf("Process id = %d Memory from %d to %d\n", id, temp->memory_index.first, temp->memory_index.second);
 
              memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
         }
@@ -600,5 +604,23 @@ int getBuddySize(int size)
         buddySize *= 2;
     }
 
-    return (buddySize < 8) ? 8 : buddySize; //as our least width size is 8=2^3
+    if(buddySize <= 8)
+    return 0;
+    else if (buddySize==16)
+    return 1;
+    else if (buddySize ==32)
+    return 2;
+    else if (buddySize==64)
+    return 3;
+    else if(buddySize==128)
+    return 4;
+    else if (buddySize==256)
+    return 5;
+    else if (buddySize == 512)
+    return 6;
+    else 
+    return 7;
+    
+    //return clog2;
+    //return (buddySize < 8) ? 8 : buddySize; //as our least width size is 8=2^3
 }
