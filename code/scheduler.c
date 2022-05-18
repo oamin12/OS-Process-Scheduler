@@ -28,6 +28,7 @@ int memory_allocated[1000];
 
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
+struct Queue *priority_q_temp;
 
 struct Node *Node_to_beinserted;
 struct Node *running_process; //for Round Robin
@@ -45,6 +46,7 @@ int main(int argc, char *argv[])
     initClk();
     signal (SIGUSR1, child_exit_handler);
     priority_q = createQueue();
+    priority_q_temp = createQueue();
     //CreateMemoryQueue();
     
     num_processes = atoi(argv[2]);
@@ -84,17 +86,13 @@ int main(int argc, char *argv[])
                     struct Node *next_process;
                     next_process = peek_queue(priority_q);
                     current_process_id = next_process->process_id;
-                    //printf("current_process_mem = %d",current_process_id);
-                    int wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
-                    total_wait=total_wait+wait;
+                    pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
+                    total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
                     total_runtime=total_runtime+pcb_table[current_process_id].PCBprocess.runtime;
-                    pcb_table[current_process_id].PCBprocess.wait=wait;
-                    fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,wait);
+                    fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.wait);
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
                     deQueue(priority_q);
                 }
-
-
                 if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
                 {
                     break;
@@ -117,7 +115,7 @@ int main(int argc, char *argv[])
                         total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
 
                         pcb_table[current_process_id].PCBprocess.starttime=getClk();
-                        pcb_table[current_process_id].PCBprocess.remainingtime=pcb_table[current_process_id].PCBprocess.runtime-(getClk()-pcb_table[current_process_id].PCBprocess.starttime);
+                        pcb_table[current_process_id].PCBprocess.remainingtime=pcb_table[current_process_id].PCBprocess.runtime;
                         fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
 
                     }
@@ -148,34 +146,37 @@ int main(int argc, char *argv[])
                check_arrival(3);
                 // if no process is running
                 //then run the first the process that comes
-                if(current_process_id == -1 && !is_empty(priority_q)) 
+                if(current_process_id == -1 && !is_empty(priority_q))
                 {
-                    
+
                     running_process = peek_queue(priority_q);
                     current_process_id = running_process->process_id;
-                    //printf("current_process_id = %d at time = %d\n", current_process_id, getClk());
+                    printf("current_process_id = %d\n", current_process_id);
+                    
                     pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
                     total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
                     pcb_table[current_process_id].PCBprocess.starttime=getClk();
                     fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
+                    
+
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
                     old_clk = getClk();
                     deQueue(priority_q);
-                    
-                    //printqueue(priority_q);
+
+                    printqueue(priority_q);
                 }
 
                 //if the currentlly running process has reached the end of its quatumn
                 //push it back in the queue(at the end) and run the next one
                 //N.B any new process will be automatically at the end of the queue
-                if(getClk() - old_clk >= quantum && (getClk() - old_clk)%quantum == 0 && !is_empty(priority_q) && current_process_id != -1)
+                if(getClk() - old_clk >= quantum  && (getClk() - old_clk)%quantum == 0 && !is_empty(priority_q) && current_process_id != -1)
                 {
+                    
+
                     pcb_table[current_process_id].PCBprocess.remainingtime=(pcb_table[current_process_id].PCBprocess.remainingtime-quantum);
                     fprintf(file,"At time %d process %d stopped arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
                     kill(pcb_table[current_process_id].pid, 20);
-
-                    //if a new a process arrives at the same time the currently running process finishes
-                    //the new should be placed first before the last one that was running
+                    
                     //--------------------------------------------------------------------------------------------------------
                     struct msgbuff message;
                     int m_pid;
@@ -220,13 +221,16 @@ int main(int argc, char *argv[])
                     }
 
                     //---------------------------------------------------------------------------------------------------------
+
+                    
+                    
                     Node_to_beinserted = newNode(current_process_id, 1);
                     enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
 
 
                     running_process = peek_queue(priority_q);
                     current_process_id = running_process->process_id;
-                    //printf("current_process_id = %d at time = %d\n", current_process_id, getClk());
+                    printf("current_process_id = %d\n", current_process_id);
                     if(pcb_table[current_process_id].PCBprocess.remainingtime==pcb_table[current_process_id].PCBprocess.runtime)
                     {   
                         pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
@@ -244,7 +248,7 @@ int main(int argc, char *argv[])
                     kill(pcb_table[current_process_id].pid, SIGCONT); //continue the new process
                     old_clk = getClk();
                     deQueue(priority_q);
-                    
+
                 }
 
                 if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
@@ -329,7 +333,10 @@ int main(int argc, char *argv[])
                         pcb_table[x].PCBprocess.priority = message.mprocess.priority;
                         pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
                         pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
-                        
+                        pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
+
+                        allocate( pcb_table[x].PCBprocess.id, pcb_table[x].PCBprocess.memsize);
+
                         Node_to_beinserted = newNode(message.mprocess.id,message.mprocess.priority);
                         enQueue(priority_q, Node_to_beinserted); // enqueue this process
                     }
@@ -339,15 +346,16 @@ int main(int argc, char *argv[])
                     if(pcb_table[current_process_id].PCBprocess.priorityNew>10)
                     {
                         pcb_table[current_process_id].PCBprocess.priorityNew=pcb_table[current_process_id].PCBprocess.priority;
+                        Node_to_beinserted = newNode(current_process_id,pcb_table[current_process_id].PCBprocess.priorityNew);
+                        enQueue(priority_q_temp, Node_to_beinserted); //enqueuing running process again
                     }
                     else
                     {
                        pcb_table[current_process_id].PCBprocess.priorityNew++; 
+                        Node_to_beinserted = newNode(current_process_id,pcb_table[current_process_id].PCBprocess.priorityNew);
+                        enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
                     }
                     
-                    Node_to_beinserted = newNode(current_process_id,pcb_table[current_process_id].PCBprocess.priorityNew);
-                    enQueue(priority_q, Node_to_beinserted); //enqueuing running process again
-
 
                     running_process = peek_queue(priority_q);
                     current_process_id = running_process->process_id;
@@ -371,8 +379,19 @@ int main(int argc, char *argv[])
                     deQueue(priority_q);
 
                 }
+                if(is_empty(priority_q) && !is_empty(priority_q_temp))
+                {
+                    while(!is_empty(priority_q_temp))
+                    {
+                        //roo7
+                        struct Node * temp = peek_queue(priority_q_temp);
+                        Node_to_beinserted = newNode(temp->process_id,pcb_table[temp->process_id].PCBprocess.priority);
+                        enQueue(priority_q,Node_to_beinserted);
+                        deQueue(priority_q_temp);
+                    }
 
-                if(is_empty(priority_q) && num_processes == 0 && current_process_id == -1)
+                }
+                if(is_empty(priority_q) && is_empty(priority_q_temp) && num_processes == 0 && current_process_id == -1)
                 {
                     break;
                 }
@@ -446,6 +465,7 @@ void check_arrival (int algo_num)
             pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
             pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
             pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
+
             //depending on the scheduling algo. we fill the right data structure
             
             //Memory Allocation for received processes
@@ -474,10 +494,16 @@ void check_arrival (int algo_num)
                 enQueue(priority_q, Node_to_beinserted); // enqueue this process
                 //printqueue(priority_q);
             }
-            else if(algo_num == 3 || algo_num == 4)
+            else if(algo_num == 3)
             {
                 total_runtime=total_runtime+message.mprocess.runtime;
                 Node_to_beinserted = newNode(message.mprocess.id, 1);
+                enQueue(priority_q, Node_to_beinserted); // enqueue this process
+            }
+            else if(algo_num == 4)
+            {
+                total_runtime=total_runtime+message.mprocess.runtime;
+                Node_to_beinserted = newNode(message.mprocess.id, message.mprocess.priority);
                 enQueue(priority_q, Node_to_beinserted); // enqueue this process
             }
             
@@ -490,10 +516,10 @@ void check_arrival (int algo_num)
 void child_exit_handler(int signum)
 {
     //DeallocateProcessToMemory(current_process_id);
-    deallocate( pcb_table[current_process_id].PCBprocess.id);
-    fprintf(memlog,"At time %d freed %d bytes from process %d from %d to %d\n",getClk(),pcb_table[current_process_id].PCBprocess.memsize,current_process_id,pcb_table[current_process_id].memoryStart,pcb_table[current_process_id].memoryEnd);
     int TA=getClk()-pcb_table[current_process_id].PCBprocess.arrival;
     float WTA = (float)TA / (float)pcb_table[current_process_id].PCBprocess.runtime;
+    deallocate( pcb_table[current_process_id].PCBprocess.id);
+    fprintf(memlog,"At time %d freed %d bytes from process %d from %d to %d\n",getClk(),pcb_table[current_process_id].PCBprocess.memsize,current_process_id,pcb_table[current_process_id].memoryStart,pcb_table[current_process_id].memoryEnd);
     total_WTA = total_WTA + WTA;
     fprintf(file, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d  WTA %.2f\n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,0,pcb_table[current_process_id].PCBprocess.wait,TA,WTA);
     current_process_id = -1;

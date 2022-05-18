@@ -1,6 +1,5 @@
 #include "headers.h"
 
-
 void continue_handler(int);
 /* Modify this file as needed*/
 int remainingtime, id, old_clk;
@@ -23,16 +22,10 @@ int main(int agrc, char *argv[])
             remainingtime--;
             old_clk = getClk();
         }
-        if(remainingtime <= 0)
-        {
-            kill(getppid(),SIGUSR1);
-        }
-
     }
     printf("my id = %d and finished at = %d\n",id, getClk());
-    //getClk();
-    //printf("a7a");
-    //kill(getppid(),SIGUSR1);
+    kill(getppid(),SIGUSR1);
+    
     destroyClk(false);
 
     return 0;
