@@ -495,6 +495,7 @@ void check_arrival (int algo_num)
 
 void child_exit_handler(int signum)
 {
+    DeallocateProcessToMemory(current_process_id);
     int TA=getClk()-pcb_table[current_process_id].PCBprocess.arrival;
     float WTA = (float)TA / (float)pcb_table[current_process_id].PCBprocess.runtime;
     total_WTA = total_WTA + WTA;
@@ -599,7 +600,7 @@ void DeallocateProcessToMemory(int id)
         printf("ERROR, cannot free this memory");
         return;
     }
-
+    
     int n = getBuddySize(pcb_table[id].memorySize);
 
     struct pair pair1;
@@ -622,6 +623,7 @@ void DeallocateProcessToMemory(int id)
     
     //Traversing queue to find any buddy
     struct Node* ptr = peek_queue(free_memory[n]);
+    int counter = 0;
 
     while(ptr != NULL)
     {
@@ -656,11 +658,13 @@ void DeallocateProcessToMemory(int id)
                 printf("Merging of blocks starting at %d to %d \n", pcb_table[id].memoryStart, buddyAddress);
             }
 
-
+            erase_node(free_memory[n], counter);
+            erase_node(free_memory[n], counter+1);
             break;
         }
 
         ptr = ptr->next;
+        counter++;
     }
 
     pcb_table[id].memorySize = -1;

@@ -156,4 +156,22 @@ struct Node* peek_queue(struct Queue* q)
     return temp;
 }
 
+void erase_node(struct Queue *q, int num)
+{
+    struct Node *ptr = q->Head;
+    struct Node *ptr_previous = q->Head;
+    ptr = ptr->next;
+
+    for(int i = 1; i < num; ++i)
+    {
+        ptr = ptr->next;
+        ptr_previous = ptr_previous->next;
+    }
+
+    ptr_previous->next = ptr->next;
+    free(ptr);
+}
+
+
+
 
