@@ -159,11 +159,18 @@ struct Node* peek_queue(struct Queue* q)
 void erase_node(struct Queue *q, int num)
 {
     struct Node *ptr = q->Head;
+
+    if(ptr == NULL)
+        return;
+
     struct Node *ptr_previous = q->Head;
     ptr = ptr->next;
 
     for(int i = 1; i < num; ++i)
     {
+        if(ptr == NULL)
+            break;
+            
         ptr = ptr->next;
         ptr_previous = ptr_previous->next;
     }
@@ -173,5 +180,14 @@ void erase_node(struct Queue *q, int num)
 }
 
 
-
+void printfreelist(struct Node *q)
+{
+    struct Node *p = q;
+    while (p != NULL)
+    {
+        printf("Memory Location:(%d, %d) ->", p->memory_index.first, p->memory_index.second);
+        p = p->next;
+    }
+    printf("NULL\n");
+}
 

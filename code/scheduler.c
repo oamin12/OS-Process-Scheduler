@@ -7,6 +7,7 @@ void child_exit_handler(int );
 int getBuddySize(int size);
 void CreateMemoryQueue();
 void AllocateProcessToMemory(int, int);
+void DeallocateProcessToMemory(int );
 
 
 int rec_val, msgq_id, num_processes, current_process_id, choosed_algo,old_clk, quantum;
@@ -609,6 +610,8 @@ void DeallocateProcessToMemory(int id)
 
     struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair1);
 
+    printf("De-Allocating memory for id %d from %d to %d\n", id, pair1.first, pair1.second);
+
     enQueue(free_memory[n], temp);
 
     int buddyNumber, buddyAddress;
@@ -616,50 +619,59 @@ void DeallocateProcessToMemory(int id)
     buddyNumber = pcb_table[id].memoryStart / pcb_table[id].memorySize;
 
     if (buddyNumber % 2 != 0)
-        buddyAddress = pcb_table[id].memoryStart - power(2, n);
+        buddyAddress = pcb_table[id].memoryStart - power(2, n+3);
     else
-        buddyAddress = pcb_table[id].memoryStart + power(2, n);
+        buddyAddress = pcb_table[id].memoryStart + power(2, n+3);
 
     
     //Traversing queue to find any buddy
+    printf("n = %d  buddyAddress = %d  buddyNumber = %d\n",n, buddyAddress, buddyNumber);
     struct Node* ptr = peek_queue(free_memory[n]);
+    
     int counter = 0;
 
     while(ptr != NULL)
     {
+        //printfreelist(ptr);
         if (ptr->memory_index.first == buddyAddress)
         {
-
+            
+            
             if (buddyNumber % 2 == 0)
             {
                 //-------------------------------------------
                 struct pair pair2;
                 pair2.first = pcb_table[id].memoryStart;
-                pair2.second = pcb_table[id].memoryStart + 2* (power(2, n) - 1);
+                pair2.second = ptr->memory_index.second;//pcb_table[id].memoryStart + 2* (power(2, n+3) - 1);
 
                 struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair2);
                 //--------------------------------------------
 
                 enQueue(free_memory[n+1], temp);
-                printf("Merging of blocks starting at %d to %d \n", pcb_table[id].memoryStart, buddyAddress);
+                printf("Merging of blocks starting at %d to %d \n", pair2.first, pair2.second);
                     
             }
             else
             {
                 //-------------------------------------------
                 struct pair pair2;
-                pair2.first = pcb_table[id].memoryStart;
-                pair2.second = pcb_table[id].memoryStart + 2* (power(2, n));
+                pair2.first = ptr->memory_index.first; 
+                pair2.second = pcb_table[id].memoryEnd;//pcb_table[id].memoryStart + 2* (power(2, n+3));
 
                 struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair2);
                 //--------------------------------------------
 
                 enQueue(free_memory[n+1], temp);
-                printf("Merging of blocks starting at %d to %d \n", pcb_table[id].memoryStart, buddyAddress);
+                printf("Merging of blocks starting at %d to %d \n", pair2.first, pair2.second);
             }
-
+            
             erase_node(free_memory[n], counter);
-            erase_node(free_memory[n], counter+1);
+            // erase_node(free_memory[n], counter+1);
+            if (buddyNumber % 2 != 0)
+                erase_node(free_memory[n], counter);
+            else
+                erase_node(free_memory[n], counter-1);
+
             break;
         }
 
