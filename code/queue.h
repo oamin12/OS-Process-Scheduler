@@ -170,7 +170,7 @@ void erase_node(struct Queue *q, int num)
     {
         if(ptr == NULL)
             break;
-            
+
         ptr = ptr->next;
         ptr_previous = ptr_previous->next;
     }
@@ -180,7 +180,7 @@ void erase_node(struct Queue *q, int num)
 }
 
 
-void printfreelist(struct Node *q)
+void printqueue_memory(struct Node *q)
 {
     struct Node *p = q;
     while (p != NULL)

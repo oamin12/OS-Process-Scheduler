@@ -8,6 +8,7 @@ int getBuddySize(int size);
 void CreateMemoryQueue();
 void AllocateProcessToMemory(int, int);
 void DeallocateProcessToMemory(int );
+void printfreelist();
 
 
 int rec_val, msgq_id, num_processes, current_process_id, choosed_algo,old_clk, quantum;
@@ -524,6 +525,7 @@ void CreateMemoryQueue()
     {
         pcb_table[i].memorySize = -1;
     }
+    printfreelist();
 }
 
 //Allocating memory for process
@@ -632,7 +634,6 @@ void DeallocateProcessToMemory(int id)
 
     while(ptr != NULL)
     {
-        //printfreelist(ptr);
         if (ptr->memory_index.first == buddyAddress)
         {
             
@@ -680,6 +681,7 @@ void DeallocateProcessToMemory(int id)
     }
 
     pcb_table[id].memorySize = -1;
+    printfreelist();
 }
 
 
@@ -720,3 +722,29 @@ int getBuddySize(int size)
     //return (buddySize < 8) ? 8 : buddySize; //as our least width size is 8=2^3
 }
 
+void printfreelist()
+{
+    printf("8's queue: ");
+    printqueue_memory(free_memory[0]);
+
+    printf("16's queue: ");
+    printqueue_memory(free_memory[1]);
+
+    printf("32's queue: ");
+    printqueue_memory(free_memory[2]);
+
+    printf("64's queue: ");
+    printqueue_memory(free_memory[3]);
+
+    printf("128's queue: ");
+    printqueue_memory(free_memory[4]);
+
+    printf("256's queue: ");
+    printqueue_memory(free_memory[5]);
+
+    printf("512's queue: ");
+    printqueue_memory(free_memory[6]);
+
+    printf("1024's queue: ");
+    printqueue_memory(free_memory[7]);
+}
