@@ -14,11 +14,17 @@ typedef short bool;
 #define true 1
 #define false 0
 // A linked list (LL) node to store a queue entry
+struct pair {
+    int first;
+    int second;
+};
+
 struct Node
 {
     struct Node *next;
     int priority;
     int process_id;
+
 
     //for the output file
     int finish_time;
@@ -27,6 +33,9 @@ struct Node
     int stopped_time;
     int running_time;
     int Remaining_time;
+
+    //used for memory allocation
+    struct pair memory_index;
 };
 
 // The queue, front stores the front node of LL and rear stores the
@@ -43,6 +52,17 @@ struct Node *newNode(int p_id, int p_priority)
     temp->next = NULL;
     temp->process_id = p_id;
     temp->priority = p_priority;
+    return temp;
+}
+
+// A utility function to create a new linked list node.
+struct Node *newNode_memory(int p_priority, struct pair index)
+{
+    struct Node *temp = (struct Node *)malloc(sizeof(struct Node));
+    temp->next = NULL;
+    temp->priority = p_priority;
+    temp->memory_index.first = index.first;
+    temp->memory_index.second = index.second;
     return temp;
 }
 
@@ -135,3 +155,5 @@ struct Node* peek_queue(struct Queue* q)
     struct Node *temp = q->Head;
     return temp;
 }
+
+

@@ -1,12 +1,21 @@
+//#include "headers.h"
+#include "queue.h"
 #include "headers.h"
 
 void check_arrival (int );
 void child_exit_handler(int );
+int getBuddySize(int size);
+void CreateMemoryQueue();
+void AllocateProcessToMemory(int, int);
+
 
 int rec_val, msgq_id, num_processes, current_process_id, choosed_algo,old_clk, quantum;
 int total_wait=0;
 float total_WTA=0;
 int total_runtime=0;
+//memory allocation
+struct Queue *free_memory[7];
+int memory_allocated[1000];
 
 struct pcb pcb_table[100]; // first Process at index 1
 struct Queue *priority_q;
@@ -26,6 +35,8 @@ int main(int argc, char *argv[])
     initClk();
     signal (SIGUSR1, child_exit_handler);
     priority_q = createQueue();
+    CreateMemoryQueue();
+    
     q1= createQueue();
     q2= createQueue();
     q3= createQueue();
@@ -67,7 +78,7 @@ int main(int argc, char *argv[])
                     struct Node *next_process;
                     next_process = peek_queue(priority_q);
                     current_process_id = next_process->process_id;
-                    //printf("current_process_id = %d", current_process_id);
+                    //printf("current_process_mem = %d",current_process_id);
                     int wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
                     total_wait=total_wait+wait;
                     total_runtime=total_runtime+pcb_table[current_process_id].PCBprocess.runtime;
@@ -436,13 +447,13 @@ void check_arrival (int algo_num)
             pcb_table[x].PCBprocess.priority = message.mprocess.priority;
             pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
             pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
-            
-
-
+            pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
+            printf("el memory be mayteen om : %d \n",message.mprocess.memsize);
             //depending on the scheduling algo. we fill the right data structure
             if(algo_num == 1)
             {
-                Node_to_beinserted = newNode(message.mprocess.id, message.mprocess.runtime);
+                Node_to_beinserted = newNode(pcb_table[x].PCBprocess.id, pcb_table[x].PCBprocess.runtime);
+                AllocateProcessToMemory(pcb_table[x].PCBprocess.memsize,pcb_table[x].PCBprocess.id);
                 enQueue(priority_q, Node_to_beinserted); // enqueue this process
             }
             else if(algo_num == 2)
@@ -490,4 +501,104 @@ void child_exit_handler(int signum)
     fprintf(file, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d  WTA %.2f\n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,0,pcb_table[current_process_id].PCBprocess.wait,TA,WTA);
     current_process_id = -1;
     signal (SIGUSR1, child_exit_handler);
+}
+
+//---------------------------------------------------MEMORY-------------------------------------------------------
+void CreateMemoryQueue()
+{
+    for(int i = 0; i < 7; ++i)
+    {
+        free_memory[i] = createQueue();
+    }
+    struct pair pair_temp;
+    pair_temp.first = 0;
+    pair_temp.second = 1023;
+
+    struct Node *temp = newNode_memory(0,pair_temp);
+    enQueue(free_memory[6], temp);
+}
+
+void AllocateProcessToMemory(int size, int id)
+{
+    int process_size = getBuddySize(size);
+    
+    if(!is_empty(free_memory[process_size]))
+    {
+        struct Node *temp = peek_queue(free_memory[process_size]);
+        deQueue(free_memory[process_size]);
+
+        printf("Memory from %d to %d\n", temp->memory_index.first, temp->memory_index.second);
+
+        memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
+    }
+    else
+    {
+        int i;
+        for(i = process_size+1; i < 7; ++i)
+        {
+            if(!is_empty(free_memory[i]))
+                break;
+            
+        }
+
+        if(i == 7)
+        {
+            printf("Sorry, failed to allocate memory \n");
+        }
+        else
+        {
+            struct Node *temp = peek_queue(free_memory[i]);
+            deQueue(free_memory[i]);
+            i--;
+
+            for(; i>= process_size; --i)
+            {
+                struct pair pair1;
+                struct pair pair2;
+
+                pair1.first = temp->memory_index.first;
+                pair1.second = (temp->memory_index.second - temp->memory_index.first)/2;
+
+                pair2.first = (temp->memory_index.second - temp->memory_index.first + 1)/2;
+                pair2.second = temp->memory_index.second;
+
+                struct Node *temp1 = newNode_memory(pair1.first,pair1);
+                struct Node *temp2 = newNode_memory(pair2.first,pair2);
+                enQueue(free_memory[i], temp1);
+                enQueue(free_memory[i], temp2);
+
+                deQueue(free_memory[i]);
+            }
+
+            printf("Memory from %d to %d\n", temp->memory_index.first, temp->memory_index.second);
+
+             memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
+        }
+    }
+}
+
+
+void DeallocateProcessToMemory(int size, int id)
+{
+
+}
+
+
+int getBuddySize(int size)
+{
+    size = size - 1;
+
+    int clog2;
+
+    for (clog2 = 0; size > 0; clog2 = clog2 + 1) //getting the log2 celling
+        size = size >> 1;
+
+    int buddySize = 1;
+
+    for (int i = 0; i < clog2; i++) //2 ^ clog2
+    {
+        buddySize *= 2;
+    }
+
+    return (buddySize < 8) ? 8 : buddySize; //as our least width size is 8=2^3
 }

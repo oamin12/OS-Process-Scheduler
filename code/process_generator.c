@@ -99,11 +99,11 @@ int main(int argc, char **argv)
         parr[i].memsize=arr[i*5+4];
     }
 
-    printf("%d \n",parr[0].id);
-    printf("%d \n",parr[0].arrival);
-    printf("%d \n",parr[0].runtime);
-    printf("%d \n",parr[0].priority);
-    printf("%d \n",parr[0].memsize);
+    // printf("%d \n",parr[0].id);
+    // printf("%d \n",parr[0].arrival);
+    // printf("%d \n",parr[0].runtime);
+    // printf("%d \n",parr[0].priority);
+    // printf("%d \n",parr[0].memsize);
 
     // 6. Send the information to the scheduler at the appropriate time.
     key_t key_id;
@@ -126,10 +126,12 @@ int main(int argc, char **argv)
             msg.mprocess.runtime = parr[process_order].runtime;
             msg.mprocess.priority = parr[process_order].priority;
             msg.mprocess.remainingtime= parr[process_order].remainingtime;
+            msg.mprocess.memsize=parr[process_order].memsize;
 
             send_val = msgsnd(msgq_id, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
             //printf("process is: %d\n",parr[process_order].id);
             printf("process %d, is sent at time : %d \n",msg.mprocess.id,getClk());
+            
             //printf("arrived at: %d",msg.mprocess.arrival);
             process_order++;
         }
