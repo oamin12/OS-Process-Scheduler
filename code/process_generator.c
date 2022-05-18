@@ -79,14 +79,9 @@ int main(int argc, char **argv)
         exit(0);
    }
     
-    //system("./clk.out &");
     printf("hello there\n");
     // 4. Use this function after creating the clock process to initialize clock.
     initClk();
-    // To get time use this function. 
-    //int x = getClk();
-    //printf("Current Time is %d\n", x);
-    // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
     struct Process parr[nProcess];
     for(int i=0;i<nProcess;i++)
@@ -99,11 +94,6 @@ int main(int argc, char **argv)
         parr[i].memsize=arr[i*5+4];
     }
 
-    // printf("%d \n",parr[0].id);
-    // printf("%d \n",parr[0].arrival);
-    // printf("%d \n",parr[0].runtime);
-    // printf("%d \n",parr[0].priority);
-    // printf("%d \n",parr[0].memsize);
 
     // 6. Send the information to the scheduler at the appropriate time.
     key_t key_id;
