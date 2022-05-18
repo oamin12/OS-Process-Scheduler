@@ -518,8 +518,13 @@ void CreateMemoryQueue()
     struct Node *temp = newNode_memory(0,pair_temp);
     enQueue(free_memory[7], temp);
     
+    for(int i = 0; i < num_processes+1; ++i)
+    {
+        pcb_table[i].memorySize = -1;
+    }
 }
 
+//Allocating memory for process
 void AllocateProcessToMemory(int size, int id)
 {
     int process_size = getBuddySize(size);
@@ -532,7 +537,9 @@ void AllocateProcessToMemory(int size, int id)
 
         printf("Process id = %d Memory from %d to %d\n", id, temp->memory_index.first, temp->memory_index.second);
         
-        memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
+        pcb_table[id].memorySize = temp->memory_index.second - temp->memory_index.first + 1;
+        pcb_table[id].memoryStart = temp->memory_index.first;
+        pcb_table[id].memoryEnd = temp->memory_index.second;
     }
     else
     {
@@ -576,15 +583,87 @@ void AllocateProcessToMemory(int size, int id)
 
             printf("Process id = %d Memory from %d to %d\n", id, temp->memory_index.first, temp->memory_index.second);
 
-             memory_allocated[temp->memory_index.first] = temp->memory_index.second - temp->memory_index.first + 1;
+            pcb_table[id].memorySize = temp->memory_index.second - temp->memory_index.first + 1;
+            pcb_table[id].memoryStart = temp->memory_index.first;
+            pcb_table[id].memoryEnd = temp->memory_index.second;
         }
     }
 }
 
-
-void DeallocateProcessToMemory(int size, int id)
+//Deallocating memory for process
+void DeallocateProcessToMemory(int id)
 {
+    //checking if the process exists
+    if(pcb_table[id].memorySize == -1)
+    {
+        printf("ERROR, cannot free this memory");
+        return;
+    }
 
+    int n = getBuddySize(pcb_table[id].memorySize);
+
+    struct pair pair1;
+    pair1.first = pcb_table[id].memoryStart;
+    pair1.second = pcb_table[id].memoryEnd;
+
+    struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair1);
+
+    enQueue(free_memory[n], temp);
+
+    int buddyNumber, buddyAddress;
+
+    buddyNumber = pcb_table[id].memoryStart / pcb_table[id].memorySize;
+
+    if (buddyNumber % 2 != 0)
+        buddyAddress = pcb_table[id].memoryStart - power(2, n);
+    else
+        buddyAddress = pcb_table[id].memoryStart + power(2, n);
+
+    
+    //Traversing queue to find any buddy
+    struct Node* ptr = peek_queue(free_memory[n]);
+
+    while(ptr != NULL)
+    {
+        if (ptr->memory_index.first == buddyAddress)
+        {
+
+            if (buddyNumber % 2 == 0)
+            {
+                //-------------------------------------------
+                struct pair pair2;
+                pair2.first = pcb_table[id].memoryStart;
+                pair2.second = pcb_table[id].memoryStart + 2* (power(2, n) - 1);
+
+                struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair2);
+                //--------------------------------------------
+
+                enQueue(free_memory[n+1], temp);
+                printf("Merging of blocks starting at %d to %d \n", pcb_table[id].memoryStart, buddyAddress);
+                    
+            }
+            else
+            {
+                //-------------------------------------------
+                struct pair pair2;
+                pair2.first = pcb_table[id].memoryStart;
+                pair2.second = pcb_table[id].memoryStart + 2* (power(2, n));
+
+                struct Node *temp = newNode_memory(pcb_table[id].memoryStart, pair2);
+                //--------------------------------------------
+
+                enQueue(free_memory[n+1], temp);
+                printf("Merging of blocks starting at %d to %d \n", pcb_table[id].memoryStart, buddyAddress);
+            }
+
+
+            break;
+        }
+
+        ptr = ptr->next;
+    }
+
+    pcb_table[id].memorySize = -1;
 }
 
 
@@ -624,3 +703,4 @@ int getBuddySize(int size)
     //return clog2;
     //return (buddySize < 8) ? 8 : buddySize; //as our least width size is 8=2^3
 }
+

@@ -74,6 +74,15 @@ void destroyMsgQueue(int msgid)
     msgctl(msgid, IPC_RMID, (struct msqids_ds *)0);
 }
 
+int power(int m, int n)
+{
+    int x = 1;
+    for(int i = 0; i < n; ++i)
+        x *= m;
+        
+    return x;
+}
+
 struct Process {
   int id;
   int arrival;
@@ -97,4 +106,8 @@ struct pcb {
     struct Process PCBprocess;
     int remTime;
     int pid;
+
+    int memorySize;
+    int memoryStart;
+    int memoryEnd;
 };
