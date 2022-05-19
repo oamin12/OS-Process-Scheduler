@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                     current_process_id = running_process->process_id;
                     printf("current_process_id = %d\n", current_process_id);
                     
-                    pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
+                    pcb_table[current_process_id].PCBprocess.wait = (getClk() - pcb_table[current_process_id].PCBprocess.arrival);
                     total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
                     pcb_table[current_process_id].PCBprocess.starttime=getClk();
                     fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
@@ -172,11 +172,17 @@ int main(int argc, char *argv[])
                 if(getClk() - old_clk >= quantum  && (getClk() - old_clk)%quantum == 0 && !is_empty(priority_q) && current_process_id != -1)
                 {
                     
-
                     pcb_table[current_process_id].PCBprocess.remainingtime=(pcb_table[current_process_id].PCBprocess.remainingtime-quantum);
-                    fprintf(file,"At time %d process %d stopped arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
-                    kill(pcb_table[current_process_id].pid, 20);
-                    
+                    if(pcb_table[current_process_id].PCBprocess.remainingtime<=0)
+                    {
+                        kill(pcb_table[current_process_id].pid, SIGCONT);
+                        continue;
+                    }
+                    else
+                    {   
+                        fprintf(file,"At time %d process %d stopped arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
+                        kill(pcb_table[current_process_id].pid, 20);
+                    }
                     //--------------------------------------------------------------------------------------------------------
                     struct msgbuff message;
                     int m_pid;
@@ -215,7 +221,10 @@ int main(int argc, char *argv[])
                         pcb_table[x].PCBprocess.arrival = message.mprocess.arrival;
                         pcb_table[x].PCBprocess.priority = message.mprocess.priority;
                         pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
-                        
+                        pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
+                        pcb_table[x].PCBprocess.wait = 0;
+
+                        allocate( pcb_table[x].PCBprocess.id, pcb_table[x].PCBprocess.memsize);
                         Node_to_beinserted = newNode(message.mprocess.id, 1);
                         enQueue(priority_q, Node_to_beinserted); // enqueue this process
                     }
@@ -233,14 +242,14 @@ int main(int argc, char *argv[])
                     printf("current_process_id = %d\n", current_process_id);
                     if(pcb_table[current_process_id].PCBprocess.remainingtime==pcb_table[current_process_id].PCBprocess.runtime)
                     {   
-                        pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.arrival;
+                        pcb_table[current_process_id].PCBprocess.wait = (getClk() - pcb_table[current_process_id].PCBprocess.arrival);
                         total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
                         pcb_table[current_process_id].PCBprocess.starttime=getClk();
                         fprintf(file,"At time %d process %d started arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
 
                     }
                     else
-                    {   pcb_table[current_process_id].PCBprocess.wait = getClk() - pcb_table[current_process_id].PCBprocess.starttime;
+                    {   pcb_table[current_process_id].PCBprocess.wait = (getClk() - pcb_table[current_process_id].PCBprocess.starttime);
                         total_wait=total_wait+pcb_table[current_process_id].PCBprocess.wait;
                         pcb_table[current_process_id].PCBprocess.starttime=getClk();
                         fprintf(file,"At time %d process %d resumed arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
@@ -291,9 +300,16 @@ int main(int argc, char *argv[])
                 {
 
                     pcb_table[current_process_id].PCBprocess.remainingtime=(pcb_table[current_process_id].PCBprocess.remainingtime-quantum);
-                    fprintf(file,"At time %d process %d stopped arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
-                    kill(pcb_table[current_process_id].pid, 20);
-                    
+                    if(pcb_table[current_process_id].PCBprocess.remainingtime<=0)
+                    {
+                        kill(pcb_table[current_process_id].pid, SIGCONT);
+                        continue;
+                    }
+                    else
+                    {   
+                        fprintf(file,"At time %d process %d stopped arr %d total %d remain %d wait %d \n",getClk(),current_process_id,pcb_table[current_process_id].PCBprocess.arrival,pcb_table[current_process_id].PCBprocess.runtime,pcb_table[current_process_id].PCBprocess.remainingtime,pcb_table[current_process_id].PCBprocess.wait);
+                        kill(pcb_table[current_process_id].pid, 20);
+                    }
                     //--------------------------------------------------------------------------------------------------------
                     struct msgbuff message;
                     int m_pid;
@@ -333,6 +349,7 @@ int main(int argc, char *argv[])
                         pcb_table[x].PCBprocess.priority = message.mprocess.priority;
                         pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
                         pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
+                        pcb_table[x].PCBprocess.wait=0;
                         pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
 
                         allocate( pcb_table[x].PCBprocess.id, pcb_table[x].PCBprocess.memsize);
@@ -464,6 +481,7 @@ void check_arrival (int algo_num)
             pcb_table[x].PCBprocess.priority = message.mprocess.priority;
             pcb_table[x].PCBprocess.priorityNew = message.mprocess.priority;
             pcb_table[x].PCBprocess.remainingtime = message.mprocess.remainingtime;
+            pcb_table[x].PCBprocess.wait=0;
             pcb_table[x].PCBprocess.memsize=message.mprocess.memsize;
 
             //depending on the scheduling algo. we fill the right data structure
