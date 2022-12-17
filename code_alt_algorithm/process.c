@@ -30,9 +30,6 @@ int main(int agrc, char *argv[])
 
     }
     printf("my id = %d and finished at = %d\n",id, getClk());
-    //getClk();
-    //printf("a7a");
-    //kill(getppid(),SIGUSR1);
     destroyClk(false);
 
     return 0;
